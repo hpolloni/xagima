@@ -6,32 +6,32 @@
 
 namespace device {
 
-    class driver;
-	class device_manager : public singleton<device_manager> {
-	private:
-		array<driver*> _drivers;
-	public:
-		void add_driver(driver* dev) {
-			_drivers.add(dev);
-		}
+  class driver;
+  class device_manager : public singleton<device_manager> {
+  private:
+    array<driver*> _drivers;
+  public:
+    void add_driver(driver* dev) {
+      _drivers.add(dev);
+    }
 
-		auto drivers() const {
-			return _drivers;
-		}
-	};
+    auto drivers() const {
+      return _drivers;
+    }
+  };
 
-	class driver {
-	public:
-		driver() {
-			device_manager::instance().add_driver(this);
-		}
+  class driver {
+  public:
+    driver() {
+      device_manager::instance().add_driver(this);
+    }
 
-		virtual void init() = 0;
-		virtual bool is_present() = 0;
-		virtual const char* name() = 0;
-	};
+    virtual void init() = 0;
+    virtual bool is_present() = 0;
+    virtual const char* name() = 0;
+  };
 
-    void init();
+  void init();
 };
 
 #endif

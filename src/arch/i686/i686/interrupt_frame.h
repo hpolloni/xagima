@@ -4,7 +4,7 @@
 #include <stdint.h>
 
 struct interrupt_frame {
-    uint32_t eip, cs, eflags;
+  uint32_t eip, cs, eflags;
 };
 
 #endif

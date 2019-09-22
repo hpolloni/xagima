@@ -6,12 +6,12 @@
 #include <utils/ostream.h>
 
 namespace tty {
-    class default_tty {
-    public:
-        void write(char c) const;
-    };
+  class default_tty {
+  public:
+    void write(char c) const;
+  };
 
-    extern const ostream<default_tty> out;
+  extern const ostream<default_tty> out;
 };
 
 

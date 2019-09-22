@@ -4,10 +4,10 @@
 template<class T>
 class singleton {
 public:
-    static T& instance() {
-        static T instance;
-        return instance;
-    }
+  static T& instance() {
+    static T instance;
+    return instance;
+  }
 };
 
 #endif
