@@ -1,0 +1,3 @@
+#!/bin/bash
+
+i686-elf-objdump -d -M intel -S $1

@@ -1,0 +1,14 @@
+-g
+-mgeneral-regs-only
+-ffreestanding
+-fstack-protector-all
+-O2
+-Wall
+-Wextra
+--sysroot=sysroot
+-Isysroot/usr/include
+-fno-exceptions
+-fno-rtti
+-std=c++17
+
+
