@@ -20,9 +20,13 @@ namespace io {
   }
 
   namespace port {
+    void wait() {
+      asm volatile ("outb %%al, $0x80" : : "a"(0));
+    }
+
     template<typename T, 
          typename enable_if<(sizeof(T) == 4 || sizeof(T) == 2 || sizeof(T) == 1), int>::type = 0>
-    void write(uint16_t port, T value) noexcept {
+    void write(uint16_t port, T value) {
       if (sizeof(T) == 4) {
         uint32_t val = (uint32_t)value;
         asm volatile ("outl %1, %0" : : "dN" (port), "a" (val));
@@ -36,7 +40,14 @@ namespace io {
         asm volatile ("outb %1, %0" : : "dN" (port), "a" (val));
       }
     }
-    
+
+    template<typename T, 
+         typename enable_if<(sizeof(T) == 4 || sizeof(T) == 2 || sizeof(T) == 1), int>::type = 0>
+    void write_and_wait(uint16_t port, T value) {
+      write(port, value);
+      wait();
+    }
+
     template<typename T,
          typename enable_if<(sizeof(T) == 4 || sizeof(T) == 2 || sizeof(T) == 1), int>::type = 0>
     T read(uint16_t port) {

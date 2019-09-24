@@ -3,8 +3,10 @@
 
 #include <stdint.h>
 
+namespace cpu {
 struct interrupt_frame {
   uint32_t eip, cs, eflags;
 };
+}
 
 #endif
