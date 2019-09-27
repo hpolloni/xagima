@@ -4,6 +4,7 @@
 #include <stdint.h>
 #include <utils/singleton.h>
 #include <utils/array.h>
+#include <string.h>
 
 namespace cpu {
   void init();
@@ -15,14 +16,20 @@ namespace cpu {
   };
 
   class interrupt_manager : public singleton<interrupt_manager> {
-    array<interrupt_handler*, 256> handlers;
+   interrupt_handler* handlers[256];
   public:
-    void register_handler(interrupt_handler *handler) {
-      handlers.add(handler);
+    interrupt_manager() {
+      memset(handlers, 0, 256);
+    }
+
+    void register_handler(uint8_t int_no, interrupt_handler *handler) {
+      handlers[int_no] = handler;
     }
 
     void handle_interrupt(uint8_t int_no, interrupt_frame* frame) {
-      handlers[int_no]->handle_interrupt(int_no, frame);
+      if (handlers[int_no]) {
+        handlers[int_no]->handle_interrupt(int_no, frame);
+      }
     }
   };
 }

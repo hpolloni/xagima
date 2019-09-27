@@ -20,10 +20,6 @@ namespace io {
   }
 
   namespace port {
-    void wait() {
-      asm volatile ("outb %%al, $0x80" : : "a"(0));
-    }
-
     template<typename T, 
          typename enable_if<(sizeof(T) == 4 || sizeof(T) == 2 || sizeof(T) == 1), int>::type = 0>
     void write(uint16_t port, T value) {
@@ -39,13 +35,6 @@ namespace io {
         uint8_t val = (uint8_t) value;
         asm volatile ("outb %1, %0" : : "dN" (port), "a" (val));
       }
-    }
-
-    template<typename T, 
-         typename enable_if<(sizeof(T) == 4 || sizeof(T) == 2 || sizeof(T) == 1), int>::type = 0>
-    void write_and_wait(uint16_t port, T value) {
-      write(port, value);
-      wait();
     }
 
     template<typename T,

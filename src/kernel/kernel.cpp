@@ -15,13 +15,16 @@ extern "C" void kernel_main(uint32_t magic, multiboot_info_t* mbi) {
   assert (magic == MULTIBOOT_BOOTLOADER_MAGIC);
   assert(CHECK_FLAG (mbi->flags, 0));
   
-  cpu::init();
-  mm::init(mbi->mem_lower * 1024, mbi->mem_upper * 1024);
-  
   tty::out << "Welcome to XagimaOS v" << __VERSION << '\n';
   if (CHECK_FLAG (mbi->flags, 2)) {
     tty::out << "Cmdline: " << reinterpret_cast<const char*>(static_cast<uintptr_t>(mbi->cmdline)) << '\n';
   }
 
+  cpu::init();
+  mm::init(mbi->mem_lower * 1024, mbi->mem_upper * 1024);
   device::init();
+  
+  for(;;) {
+    asm("hlt");
+  }
 }
