@@ -28,6 +28,10 @@ public:
 
 template<typename U>
 constexpr const ostream<U>& operator<<(const ostream<U>& os, uint64_t num) {
+  if (num == 0) {
+    os.write('0');
+    return os;
+  }
   char buf[20] = {};
   char* e = buf;
   char* s = buf;
