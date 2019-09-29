@@ -19,11 +19,11 @@ public:
     memset(entries, 0, size);
   }
 
-  constexpr void set(int id, entry e) const noexcept {
+  constexpr void set(int id, entry e) const {
     entries[id] = e.bits;
   }
 
-  constexpr void flush() const noexcept {
+  constexpr void flush() const {
     static_cast<const child* const>(this)->flush_table();
   }
 };

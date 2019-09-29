@@ -11,15 +11,15 @@ private:
 public:
   ostream(U _u) : _under(_u) {}
 
-  constexpr auto write(char c) const noexcept {
+  constexpr auto write(char c) const {
     _under.write(c);
   }
 
-  constexpr auto base() const noexcept {
+  constexpr auto base() const {
     return _base;
   }
 
-  constexpr auto hex() const noexcept {
+  constexpr auto hex() const {
     auto new_os = ostream{_under};
     new_os._base = 16;
     return new_os;

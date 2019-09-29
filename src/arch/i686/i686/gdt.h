@@ -20,7 +20,7 @@ public:
     set(4, { 0x00CFF2000000FFFF });
   }
 
-  void flush_table() const noexcept {
+  void flush_table() const {
     gdt_flush((uint32_t)&ptr);
     flush_segments();
   }

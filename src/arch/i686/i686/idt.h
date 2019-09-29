@@ -19,7 +19,7 @@ extern "C" void idt_flush(uint32_t);
 class interrupt_descriptor_table : public descriptor_table<interrupt_descriptor_table, idt_entry, 256> {
 public:
   constexpr interrupt_descriptor_table() : descriptor_table() {}
-  void flush_table() const noexcept {
+  void flush_table() const {
     idt_flush(static_cast<uint32_t>(reinterpret_cast<uintptr_t>(&ptr)));
   }
 };

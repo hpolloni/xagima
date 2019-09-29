@@ -42,13 +42,13 @@ namespace tty {
       clear();
     }
     
-    constexpr void move_cursor(uint8_t x, uint8_t y) const noexcept {
+    constexpr void move_cursor(uint8_t x, uint8_t y) const {
       cursorX = x;
       cursorY = y;
       // TODO: Actually move the cursor
     }
 
-    constexpr void clear() const noexcept {
+    constexpr void clear() const {
       for (size_t y = 0; y < vga_height; y++) {
         for (size_t x = 0; x < vga_width; x++) {
           framebuffer[y * vga_width + x] = vga_entry(' ', color);
@@ -57,7 +57,7 @@ namespace tty {
       move_cursor(0,0);
     }
 
-    constexpr void write(char c) const noexcept {
+    constexpr void write(char c) const {
       if (c == '\n') {
         cursorX = 0;
         cursorY++;
