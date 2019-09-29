@@ -83,6 +83,7 @@ namespace pci {
             pci_header pci{bus, slot, function};
 
             if (pci.is_present()) {
+#if DEBUG
               tty::out.hex() << "VendorID:" << pci.vendor_id;
               tty::out.hex() << " DeviceID:" << pci.device_id;
               tty::out.hex() << " ClassID:" << (uint16_t)pci.class_id;
@@ -90,6 +91,7 @@ namespace pci {
               tty::out.hex() << " Header: " << (uint16_t)pci.header_type;
               tty::out.hex() << " ProgIF:" << (uint16_t)pci.prog_if;
               tty::out.hex() << " BAR0: " << pci.bar[0] << "\n\n";
+#endif
               pci_devices.add(pci);
             }
           }
