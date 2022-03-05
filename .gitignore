@@ -34,3 +34,7 @@
 /isodir
 /sysroot
 /xagima.iso
+
+/target
+.idea
+Cargo.lock
