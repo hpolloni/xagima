@@ -93,43 +93,13 @@ impl fmt::Write for Writer {
 }
 
 use lazy_static::lazy_static;
-use spin::{Mutex, MutexGuard};
+use spin::Mutex;
 
 lazy_static! {
     pub static ref WRITER: Mutex<Writer> = Mutex::new(Writer {
         cursor_x: 0,
         bg_color: Color::Black,
-        fg_color: Color::White,
+        fg_color: Color::LightGrey,
         framebuffer: unsafe { VolBlock::new(0xb8000) },
     });
-}
-
-#[macro_export]
-macro_rules! print {
-    ($($arg:tt)*) => ($crate::vga::_print(format_args!($($arg)*)));
-}
-
-#[macro_export]
-macro_rules! println {
-    () => ($crate::print!("\n"));
-    ($($arg:tt)*) => ($crate::print!("{}\n", format_args!($($arg)*)));
-}
-
-#[doc(hidden)]
-pub fn _print(args: fmt::Arguments) {
-    use core::fmt::Write;
-    WRITER.lock().write_fmt(args).unwrap();
-}
-
-#[doc(hidden)]
-pub fn _cprint(color: Color, args: fmt::Arguments) {
-    use core::fmt::Write;
-
-    WRITER.lock().write_fmt(args).unwrap();
-
-    // TODO: use a guard
-    let current_color = WRITER.lock().fg_color;
-    WRITER.lock().fg_color = color;
-    WRITER.lock().write_fmt();
-    WRITER.lock().fg_color = current_color;
 }

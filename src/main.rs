@@ -2,8 +2,10 @@
 #![no_main]
 
 mod vga;
+mod print;
 
 use core::panic::PanicInfo;
+use bootloader::BootInfo;
 
 #[panic_handler]
 fn panic(info: &PanicInfo) -> ! {
@@ -12,9 +14,8 @@ fn panic(info: &PanicInfo) -> ! {
 }
 
 #[no_mangle]
-pub extern "C" fn _start() -> ! {
-    print!("Hello world");
-    println!(", some numbers: {} {}", 42, 1.337);
-    panic!("Kernel panic");
+pub extern "C" fn _start(_boot_info: &'static BootInfo) -> ! {
+    panic!("End of message");
+
     loop {}
 }
