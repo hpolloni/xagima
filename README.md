@@ -1,22 +1,20 @@
 ## XagimaOS
 A toy OS
 
-Current status: it boots and setup GDT and IDT. Does PCI probing
+### Building (MacOS)
+```sh
+rustup component add rust-src --toolchain nightly-x86_64-apple-darwin
 
-### Building
-You will need to setup a cross compiler (I have GCC 8.1 setup). The Makefile assumes you have i686-elf-gXX and i686-elf-as in the PATH.
-
-Once you have a cross compiler targetting i686-elf, just do:
-```
-make
+cargo build
 ```
 
-You can test using qemu, by running:
-```
-./tools/qemu.sh
-```
+### Running it
+You might need to install certain components.
+```sh
+# Needed by bootloader crate
+rustup component add llvm-tools-preview
 
-You can use `make iso` to create a bootable iso (I haven't tested this in real hw only with qemu).
-```
-./tools/qemu-iso.sh
+brew install qemu
+
+cargo run
 ```
