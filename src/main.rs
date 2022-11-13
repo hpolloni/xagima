@@ -41,7 +41,7 @@ pub extern "C" fn _start(_boot_info: &'static BootInfo) -> ! {
                 let pci_device = pci::probe(pci::Location::new(bus, slot, function));
                 if pci_device.is_some() {
                     let device = pci_device.unwrap();
-                    println!("Found device: {}", device);
+                    println!("Found device: {:?}", device);
                 }
             }
         }

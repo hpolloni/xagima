@@ -60,6 +60,9 @@ impl Writer {
                     .index(row * VGA_WIDTH + col)
                     .write(make_vga_entry(byte, self.fg_color, self.bg_color));
                 self.cursor_x += 1;
+                if self.cursor_x >= VGA_WIDTH {
+                    self.new_line();
+                }
             }
         }
     }
