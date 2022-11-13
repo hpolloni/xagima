@@ -18,3 +18,8 @@ brew install qemu
 
 cargo run
 ```
+
+### Running tests
+```
+cargo test --lib
+```
