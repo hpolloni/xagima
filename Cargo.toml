@@ -20,4 +20,4 @@ panic = "abort"
 panic = "abort"
 
 [package.metadata.bootimage]
-run-command = ["qemu-system-x86_64", "-drive", "format=raw,file={}", "-net", "nic,model=ne2k_pci"]
+run-command = ["qemu-system-x86_64", "-drive", "format=raw,file={}", "-net","nic,model=e1000"]

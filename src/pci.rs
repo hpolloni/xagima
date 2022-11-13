@@ -1,3 +1,5 @@
+use core::fmt::Display;
+
 
 const CONFIG_ADDRESS: u16 = 0xCF8;
 const CONFIG_DATA: u16 = 0xCFC;
@@ -28,6 +30,17 @@ pub struct Device {
     pub bar: [u32; 6],
 }
 
+impl Display for Device {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        writeln!(f, "PCIDevice {{")?;
+        writeln!(f, " vendor_id: {:#x}", self.vendor_id)?;
+        writeln!(f, " device_id: {:#x}", self.device_id)?;
+        writeln!(f, " class_id: {:#x}", self.class_id)?;
+        writeln!(f, " subclass_id: {:#x}", self.subclass_id)?;
+        writeln!(f, " ioaddr: {:#x}", self.bar[0])?;
+        writeln!(f, " }}")
+    }
+}
 
 fn config_read(location: Location, offset: u8) -> u16 {
     let bus32: u32 = location.bus.into();
@@ -43,7 +56,8 @@ fn config_read(location: Location, offset: u8) -> u16 {
     unsafe {
         /* TODO: lock? */
         config_address.write(address);
-        return config_data.read();
+        let data: u32 = config_data.read();
+        return ((data >> ((offset & 2) * 8)) & 0xFFFF) as u16;
     }
 }
 
@@ -59,11 +73,11 @@ pub fn probe(location: Location) -> Option<Device> {
         return None
     }
     let device_id = config_read(location, 0x02);
-    let revision = (config_read(location, 0x08) & 0x00FF) as u8;
-    let prog_if = (config_read(location, 0x08) & 0xFF00) as u8;
-    let subclass_id = (config_read(location, 0x0A) & 0x00FF) as u8;
-    let class_id = ((config_read(location, 0x0A) & 0xFF00) >> 8) as u8;
-    let header_type = (config_read(location, 0x0E) & 0x00FF) as u8;
+
+    let [prog_if, revision] = config_read(location, 0x08).to_be_bytes();
+    let [class_id, subclass_id] = config_read(location, 0x0A).to_be_bytes();
+    let [_, header_type] = config_read(location, 0x0E).to_be_bytes();
+
     let mut bar: [u32; 6] = [0; 6];
     if header_type == 0x00 {
         for i in 0..6 {
@@ -83,21 +97,3 @@ pub fn probe(location: Location) -> Option<Device> {
         bar
     })
 }
-
-/*
-
-      // TODO: other header types
-      if (header_type == 0x00) {
-        for (int i = 0; i < 6; i++) {
-          bar[i] = config_read32(bus, slot, function, 0x10 + i * 4);
-        }
-      }
-    }
-
-    struct pci_header {
-    uint8_t bus, slot, function;
-
-
-
-    uint32_t bar[6];
-*/
