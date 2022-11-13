@@ -1,5 +1,6 @@
 use core::fmt;
 use crate::vga;
+use crate::serial;
 
 #[macro_export]
 macro_rules! print {
@@ -15,5 +16,7 @@ macro_rules! println {
 #[doc(hidden)]
 pub fn _print(args: fmt::Arguments) {
     use core::fmt::Write;
-    vga::WRITER.lock().write_fmt(args).unwrap();
+    // TODO: console detection
+    vga::WRITER.lock().write_fmt(args).expect("Printing to VGA failed");
+    serial::SERIAL1.lock().write_fmt(args).expect("Printing to serial failed");
 }

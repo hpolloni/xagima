@@ -1,24 +1,31 @@
 #![no_std]
 #![no_main]
 #![feature(abi_x86_interrupt)]
-
-mod vga;
-mod print;
-mod pci;
-mod interrupts;
+#![feature(custom_test_frameworks)]
+#![test_runner(xagima::test_harness::test_runner)]
+#![reexport_test_harness_main = "test_main"]
 
 use core::panic::PanicInfo;
 use bootloader::BootInfo;
+use xagima::println;
+use xagima::pci;
 
+#[cfg(not(test))]
 #[panic_handler]
 fn panic(info: &PanicInfo) -> ! {
     println!("{}", info);
     loop {}
 }
 
+#[cfg(test)]
+#[panic_handler]
+fn panic(info: &PanicInfo) -> ! {
+    xagima::test_harness::panic_handler(info);
+}
+
 #[no_mangle]
 pub extern "C" fn _start(_boot_info: &'static BootInfo) -> ! {
-    interrupts::init();
+    xagima::interrupts::init();
 
     // TODO: gdt / tss
     // TODO: paging
@@ -34,5 +41,19 @@ pub extern "C" fn _start(_boot_info: &'static BootInfo) -> ! {
             }
         }
     }
+ 
+    #[cfg(test)]
+    test_main();
+    
     panic!("End of main");
+}
+
+#[test_case]
+fn trivial_assertion() {
+    use xagima::print;
+
+    print!("trivial assertion... ");
+    assert_eq!(1, 1);
+    println!("[ok]");
+    assert_eq!(0, 1);
 }
