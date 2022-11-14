@@ -1,19 +1,26 @@
 #![no_std]
 #![no_main]
 #![feature(abi_x86_interrupt)]
+#![feature(default_alloc_error_handler)]
 
-pub mod testing;
-pub mod print;
-pub mod vga;
-pub mod serial;
-pub mod interrupts;
-pub mod pci;
+use bootloader::BootInfo;
+
 pub mod gdt;
+pub mod interrupts;
+pub mod memory;
+pub mod pci;
+pub mod print;
+pub mod serial;
+pub mod testing;
+pub mod vga;
+pub mod heap;
 
-pub fn init() {
+extern crate alloc;
+
+pub fn init(boot_info: &'static BootInfo) {
     gdt::init();
     interrupts::init();
-    // TODO: paging
+    memory::init(boot_info);
 }
 
 pub fn halt() -> ! {

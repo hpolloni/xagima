@@ -1,11 +1,9 @@
-
-
-use x86_64::VirtAddr;
-use x86_64::structures::tss::TaskStateSegment;
 use lazy_static::lazy_static;
-use x86_64::structures::gdt::{GlobalDescriptorTable, Descriptor, SegmentSelector};
+use x86_64::instructions::segmentation::{Segment, CS};
 use x86_64::instructions::tables::load_tss;
-use x86_64::instructions::segmentation::{CS, Segment};
+use x86_64::structures::gdt::{Descriptor, GlobalDescriptorTable, SegmentSelector};
+use x86_64::structures::tss::TaskStateSegment;
+use x86_64::VirtAddr;
 
 const STACK_DEFAULT_SIZE: usize = 4096 * 6; // TODO: fixed size stack
 

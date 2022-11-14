@@ -44,7 +44,7 @@ impl Writer {
         for byte in s.bytes() {
             match byte {
                 0x20..=0x7e | b'\n' => self.write_byte(byte),
-                _ => self.write_byte(0xfe)
+                _ => self.write_byte(0xfe),
             }
         }
     }
@@ -71,7 +71,9 @@ impl Writer {
         for row in 1..VGA_HEIGHT {
             for col in 0..VGA_WIDTH {
                 let character = self.framebuffer.index(row * VGA_WIDTH + col).read();
-                self.framebuffer.index((row-1) * VGA_WIDTH + col).write(character);
+                self.framebuffer
+                    .index((row - 1) * VGA_WIDTH + col)
+                    .write(character);
             }
         }
         self.clear_row(VGA_HEIGHT - 1);

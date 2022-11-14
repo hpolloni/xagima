@@ -3,8 +3,6 @@ use core::panic::PanicInfo;
 use crate::println;
 
 pub fn runner(tests: &[&dyn Fn()]) {
-    crate::init();
-    
     println!("Running {} tests", tests.len());
     for test in tests {
         test();

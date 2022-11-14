@@ -1,6 +1,5 @@
 use core::fmt::Display;
 
-
 const CONFIG_ADDRESS: u16 = 0xCF8;
 const CONFIG_DATA: u16 = 0xCFC;
 
@@ -8,7 +7,7 @@ const CONFIG_DATA: u16 = 0xCFC;
 pub struct Location {
     bus: u8,
     slot: u8,
-    func: u8
+    func: u8,
 }
 
 impl Location {
@@ -70,7 +69,7 @@ fn config_read32(location: Location, offset: u8) -> u32 {
 pub fn probe(location: Location) -> Option<Device> {
     let vendor_id = config_read(location, 0x00);
     if vendor_id == 0xFFFF {
-        return None
+        return None;
     }
     let device_id = config_read(location, 0x02);
 
@@ -94,6 +93,6 @@ pub fn probe(location: Location) -> Option<Device> {
         subclass_id,
         class_id,
         header_type,
-        bar
+        bar,
     })
 }

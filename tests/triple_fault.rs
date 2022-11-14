@@ -4,6 +4,7 @@
 #![feature(custom_test_frameworks)]
 #![test_runner(xagima::testing::runner)]
 #![reexport_test_harness_main = "test_main"]
+#![feature(default_alloc_error_handler)]
 
 use bootloader::BootInfo;
 use core::panic::PanicInfo;
@@ -15,7 +16,8 @@ fn panic(_: &PanicInfo) -> ! {
 }
 
 #[no_mangle]
-pub extern "C" fn _start(_boot_info: &'static BootInfo) -> ! {
+pub extern "C" fn _start(boot_info: &'static BootInfo) -> ! {
+    xagima::init(boot_info);
     test_main();
     xagima::testing::fail();
     xagima::halt();

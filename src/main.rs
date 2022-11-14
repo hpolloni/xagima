@@ -1,9 +1,10 @@
 #![no_std]
 #![no_main]
 #![feature(abi_x86_interrupt)]
+#![feature(default_alloc_error_handler)]
 
-use core::panic::PanicInfo;
 use bootloader::BootInfo;
+use core::panic::PanicInfo;
 use xagima::pci;
 use xagima::println;
 
@@ -14,8 +15,8 @@ fn panic(info: &PanicInfo) -> ! {
 }
 
 #[no_mangle]
-pub extern "C" fn _start(_boot_info: &'static BootInfo) -> ! {
-    xagima::init();
+pub extern "C" fn _start(boot_info: &'static BootInfo) -> ! {
+    xagima::init(boot_info);
 
     // PCI scan
     for bus in 0..255 {
@@ -29,7 +30,6 @@ pub extern "C" fn _start(_boot_info: &'static BootInfo) -> ! {
             }
         }
     }
- 
+
     panic!("End of main");
 }
-
