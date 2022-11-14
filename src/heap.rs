@@ -1,8 +1,8 @@
-use linked_list_allocator::LockedHeap;
+use good_memory_allocator::SpinLockedAllocator;
 use x86_64::{structures::paging::{Mapper, Size4KiB, FrameAllocator, Page, mapper::MapToError, PageTableFlags}, VirtAddr};
 
 #[global_allocator]
-static ALLOCATOR: LockedHeap = LockedHeap::empty();
+static ALLOCATOR: SpinLockedAllocator = SpinLockedAllocator::empty();
 
 const HEAP_START: usize = 0x_4321_1234_0000;
 const HEAP_SIZE: usize = 100 * 1024;
@@ -26,7 +26,7 @@ pub fn init(mapper: &mut impl Mapper<Size4KiB>, frame_allocator: &mut impl Frame
     }
 
     unsafe {
-        ALLOCATOR.lock().init(HEAP_START, HEAP_SIZE);
+        ALLOCATOR.init(HEAP_START, HEAP_SIZE);
     }
 
     Ok(())

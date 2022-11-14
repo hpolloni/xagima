@@ -26,7 +26,8 @@ pub extern "C" fn _start(boot_info: &'static BootInfo) -> ! {
 #[allow(unconditional_recursion)]
 fn stack_overflow() {
     stack_overflow();
-    volatile::Volatile::new(0).read(); // prevent tail recursion optimizations
+    let mut value = 0u32;
+    volatile::Volatile::new(&mut value).read(); // prevent tail recursion optimizations
 }
 
 #[test_case]
