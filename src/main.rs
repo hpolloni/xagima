@@ -32,3 +32,4 @@ pub extern "C" fn _start(_boot_info: &'static BootInfo) -> ! {
  
     panic!("End of main");
 }
+

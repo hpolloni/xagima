@@ -8,9 +8,12 @@ pub mod vga;
 pub mod serial;
 pub mod interrupts;
 pub mod pci;
+pub mod gdt;
 
 pub fn init() {
+    gdt::init();
     interrupts::init();
+
     // TODO: gdt / tss
     // TODO: paging
 }
