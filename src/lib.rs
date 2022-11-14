@@ -13,7 +13,11 @@ pub mod gdt;
 pub fn init() {
     gdt::init();
     interrupts::init();
-
-    // TODO: gdt / tss
     // TODO: paging
+}
+
+pub fn halt() -> ! {
+    loop {
+        x86_64::instructions::hlt();
+    }
 }

@@ -16,7 +16,7 @@ pub fn default_panic_handler(info: &PanicInfo) -> ! {
     println!("[failed]\n");
     println!("Error: {}\n", info);
     fail();
-    loop {}
+    crate::halt();
 }
 
 fn exit_qemu(exit_code: u32) {

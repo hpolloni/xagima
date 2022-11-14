@@ -16,7 +16,7 @@ fn panic(info: &PanicInfo) -> ! {
 #[no_mangle]
 pub extern "C" fn _start(_boot_info: &'static BootInfo) -> ! {
     test_main();
-    loop {}
+    xagima::halt();
 }
 
 #[test_case]

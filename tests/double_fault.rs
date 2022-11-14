@@ -11,14 +11,14 @@ use core::panic::PanicInfo;
 #[panic_handler]
 fn panic(_: &PanicInfo) -> ! {
     xagima::testing::success();
-    loop{}
+    xagima::halt();
 }
 
 #[no_mangle]
 pub extern "C" fn _start(_boot_info: &'static BootInfo) -> ! {
     test_main();
     xagima::testing::fail();
-    loop {}
+    xagima::halt();
 }
 
 #[test_case]
