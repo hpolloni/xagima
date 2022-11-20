@@ -1,19 +1,29 @@
 
-use bootloader::{bootinfo::{MemoryMap, MemoryRegionType}, BootInfo};
+use bootloader::{
+    bootinfo::{MemoryMap, MemoryRegionType},
+    BootInfo,
+};
 use x86_64::{
     registers::control::Cr3,
-    structures::paging::{FrameAllocator, OffsetPageTable, PageTable, PhysFrame, Size4KiB },
+    structures::paging::{FrameAllocator, OffsetPageTable, PageTable, PhysFrame, Size4KiB, Mapper, Page, PageTableFlags},
     PhysAddr, VirtAddr,
 };
+
 use crate::heap;
 
-pub fn init(boot_info: &'static BootInfo) {
+pub fn init(boot_info: &'static BootInfo) -> Result<(), MemoryError> {
     unsafe {
-        unsafe_init(boot_info);
+        unsafe_init(boot_info)
     }
 }
 
-unsafe fn unsafe_init(boot_info: &'static BootInfo) {
+#[derive(Debug, Clone, Copy)]
+pub enum MemoryError {
+    PageMappingError,
+    FrameAllocationError
+}
+
+unsafe fn unsafe_init(boot_info: &'static BootInfo) -> Result<(), MemoryError> {
     let phys_offset = VirtAddr::new(boot_info.physical_memory_offset);
     let (current_frame, _) = Cr3::read();
     let phys_addr = current_frame.start_address();
@@ -23,24 +33,33 @@ unsafe fn unsafe_init(boot_info: &'static BootInfo) {
 
     let mut mapper = OffsetPageTable::new(level_4_table, phys_offset);
 
-    let mut frame_allocator = BootInfoFrameAllocator::init(&boot_info.memory_map);
+    let mut frame_allocator = DefaultFrameAllocator::new(&boot_info.memory_map);
 
-    heap::init(&mut mapper, &mut frame_allocator);
+    // TODO: hack for e1000 driver
+    // The memory manager module should be decoupled from the mapper/frame allocation. 
+    // The interface should simply have an init and a map/map_to method.
+    let page = Page::containing_address(VirtAddr::new(0xfebc0000));
+    let frame = PhysFrame::containing_address(PhysAddr::new(0xfebc0000));
+    mapper.map_to(page, frame, PageTableFlags::PRESENT | PageTableFlags::WRITABLE, &mut frame_allocator)?.flush();
+
+    heap::init(&mut mapper, &mut frame_allocator)?;
+
+    Ok(())
 }
 
-struct BootInfoFrameAllocator {
+struct DefaultFrameAllocator {
     memory_map: &'static MemoryMap,
     next: usize,
 }
 
-impl BootInfoFrameAllocator {
+impl DefaultFrameAllocator {
     /// Create a FrameAllocator from the passed memory map.
     ///
     /// This function is unsafe because the caller must guarantee that the passed
     /// memory map is valid. The main requirement is that all frames that are marked
     /// as `USABLE` in it are really unused.
-    pub unsafe fn init(memory_map: &'static MemoryMap) -> Self {
-        BootInfoFrameAllocator {
+    pub unsafe fn new(memory_map: &'static MemoryMap) -> Self {
+        Self {
             memory_map,
             next: 0,
         }
@@ -49,8 +68,11 @@ impl BootInfoFrameAllocator {
     /// Returns an iterator over the usable frames specified in the memory map.
     fn usable_frames(&self) -> impl Iterator<Item = PhysFrame> {
         // get usable regions from memory map
-        let regions = self.memory_map.iter();
-        let usable_regions = regions.filter(|r| r.region_type == MemoryRegionType::Usable);
+        let usable_regions = self
+            .memory_map
+            .iter()
+            .filter(|r| r.region_type == MemoryRegionType::Usable);
+
         // map each region to its address range
         let addr_ranges = usable_regions.map(|r| r.range.start_addr()..r.range.end_addr());
         // transform to an iterator of frame start addresses
@@ -60,7 +82,7 @@ impl BootInfoFrameAllocator {
     }
 }
 
-unsafe impl FrameAllocator<Size4KiB> for BootInfoFrameAllocator {
+unsafe impl FrameAllocator<Size4KiB> for DefaultFrameAllocator {
     fn allocate_frame(&mut self) -> Option<PhysFrame> {
         let frame = self.usable_frames().nth(self.next);
         self.next += 1;

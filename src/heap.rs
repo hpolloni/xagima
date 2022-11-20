@@ -1,14 +1,29 @@
 use good_memory_allocator::SpinLockedAllocator;
-use x86_64::{structures::paging::{Mapper, Size4KiB, FrameAllocator, Page, mapper::MapToError, PageTableFlags}, VirtAddr};
+use x86_64::{
+    structures::paging::{
+        mapper::MapToError, FrameAllocator, Mapper, Page, PageTableFlags, Size4KiB,
+    },
+    VirtAddr,
+};
+
+use crate::memory::MemoryError;
 
 #[global_allocator]
 static ALLOCATOR: SpinLockedAllocator = SpinLockedAllocator::empty();
 
 const HEAP_START: usize = 0x_4321_1234_0000;
-const HEAP_SIZE: usize = 100 * 1024;
+const HEAP_SIZE: usize = 1024 * 1024; /* 1MB */
 
-pub fn init(mapper: &mut impl Mapper<Size4KiB>, frame_allocator: &mut impl FrameAllocator<Size4KiB>) 
-    -> Result<(), MapToError<Size4KiB>>{
+impl From<MapToError<Size4KiB>> for MemoryError {
+    fn from(_: MapToError<Size4KiB>) -> Self {
+        MemoryError::PageMappingError
+    }
+}
+
+pub fn init(
+    mapper: &mut impl Mapper<Size4KiB>,
+    frame_allocator: &mut impl FrameAllocator<Size4KiB>,
+) -> Result<(), MemoryError> {
     let page_range = {
         let heap_start = VirtAddr::new(HEAP_START as u64);
         let heap_end = heap_start + HEAP_SIZE - 1u64;
@@ -20,7 +35,7 @@ pub fn init(mapper: &mut impl Mapper<Size4KiB>, frame_allocator: &mut impl Frame
     for page in page_range {
         let frame = frame_allocator
             .allocate_frame()
-            .ok_or(MapToError::FrameAllocationFailed)?;
+            .ok_or(MemoryError::FrameAllocationError)?;
         let flags = PageTableFlags::PRESENT | PageTableFlags::WRITABLE;
         unsafe { mapper.map_to(page, frame, flags, frame_allocator)?.flush() };
     }

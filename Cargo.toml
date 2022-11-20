@@ -23,7 +23,7 @@ features = ["spin_no_std"]
 # panic = "abort"
 
 [package.metadata.bootimage]
-run-command = ["qemu-system-x86_64", "-drive", "format=raw,file={}", "-net", "nic,model=e1000", "-serial", "stdio"]
+run-command = ["qemu-system-x86_64", "-drive", "format=raw,file={}", "-net", "nic,model=ne2k_pci,macaddr=00:11:22:33:44:55", "-serial", "stdio"]
 test-args = ["-device", "isa-debug-exit,iobase=0xf4,iosize=0x04", "-display", "none"]
 test-success-exit-code = 33
 

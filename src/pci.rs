@@ -1,13 +1,16 @@
 use core::fmt::Display;
+use alloc::vec::Vec;
+use voladdress::{VolAddress, Unsafe};
+use x86_64::{instructions::port::{PortWriteOnly, PortReadOnly}, structures::port::{PortWrite, PortRead}};
 
 const CONFIG_ADDRESS: u16 = 0xCF8;
 const CONFIG_DATA: u16 = 0xCFC;
 
 #[derive(Copy, Clone, Debug)]
 pub struct Location {
-    bus: u8,
-    slot: u8,
-    func: u8,
+    pub bus: u8,
+    pub slot: u8,
+    pub func: u8,
 }
 
 impl Location {
@@ -26,7 +29,7 @@ pub struct Device {
     pub subclass_id: u8,
     pub class_id: u8,
     pub header_type: u8,
-    pub bar: [u32; 6],
+    pub bar: [usize; 6],
 }
 
 impl Display for Device {
@@ -41,6 +44,61 @@ impl Display for Device {
     }
 }
 
+impl Device {
+    // TODO: I feel these should be per BAR and not at the device level
+    // So the API should be something like pci.bar[0].read()...however, 
+    // pci.read may still default to bar[0]
+    pub fn write<T: Copy + PortWrite>(&self, offset: usize, value: T) {
+        if self.bar[0] & 1 == 0 {
+            // Memory Space BAR
+            if (self.bar[0] >> 1) & 3 == 0 {
+                // 32-bit address
+                let mem_base: usize = self.bar[0] & 0xFFFFFFF0 as usize;
+                let addr = mem_base + offset;
+                unsafe {
+                    let ptr: VolAddress<T, (), Unsafe> = VolAddress::new(addr);
+                    ptr.write(value);
+                }
+            } else if (self.bar[0] >> 1) & 3 == 2 {
+                todo!("unsupported 64-bit base address");
+            } else {
+                panic!("Unknown base address register type");
+            }
+        } else {
+            // I/O Space BAR
+            let io_base = self.bar[0] & !0x3;
+            let addr = io_base + offset;
+            let mut port = PortWriteOnly::new(addr as u16);
+            unsafe { port.write(value); }
+        }
+    }
+    
+    pub fn read<T: Copy + PortRead>(&self, offset: usize) -> T {
+        if self.bar[0] & 1 == 0 {
+            // Memory Mapped I/O
+            if (self.bar[0] >> 1) & 3 == 0 {
+                let mem_base: usize = self.bar[0] & 0xFFFFFFF0 as usize;
+                let addr = mem_base + offset; 
+                unsafe {
+                    let ptr: VolAddress<T, Unsafe, ()> = VolAddress::new(addr);
+                    return ptr.read();
+                }
+            } else if (self.bar[0] >> 1) & 3 == 2 {
+                todo!("unsupported 64-bit base address");
+            } else {
+                panic!("Unknown base address register type");
+            }
+        } else {
+            // I/O Space BAR
+            let io_base = self.bar[0] & !0x3;
+            let addr = io_base + offset;
+            let mut port = PortReadOnly::new(addr as u16);
+            unsafe { return port.read(); } 
+        }
+    }
+    
+}
+
 fn config_read(location: Location, offset: u8) -> u16 {
     let bus32: u32 = location.bus.into();
     let slot32: u32 = location.slot.into();
@@ -50,8 +108,8 @@ fn config_read(location: Location, offset: u8) -> u16 {
     let mask = 0x80000000u32;
     let address = (bus32 << 16) | (slot32 << 11) | (func32 << 8) | (offset32 & 0xfc) | mask;
 
-    let mut config_address = x86_64::instructions::port::PortWriteOnly::new(CONFIG_ADDRESS);
-    let mut config_data = x86_64::instructions::port::PortReadOnly::new(CONFIG_DATA);
+    let mut config_address = PortWriteOnly::new(CONFIG_ADDRESS);
+    let mut config_data = PortReadOnly::new(CONFIG_DATA);
     unsafe {
         /* TODO: lock? */
         config_address.write(address);
@@ -66,6 +124,23 @@ fn config_read32(location: Location, offset: u8) -> u32 {
     return hi << 16 | lo;
 }
 
+pub fn scan() -> Vec<Device> {
+    let mut devices = Vec::new();
+
+    for bus in 0..255 {
+        for slot in 0..32 {
+            for function in 0..8 {
+                let pci_device = probe(Location::new(bus, slot, function));
+                if pci_device.is_some() {
+                    let device = pci_device.unwrap();
+                    devices.push(device);
+                }
+            }
+        }
+    }
+    return devices;
+}
+
 pub fn probe(location: Location) -> Option<Device> {
     let vendor_id = config_read(location, 0x00);
     if vendor_id == 0xFFFF {
@@ -77,10 +152,10 @@ pub fn probe(location: Location) -> Option<Device> {
     let [class_id, subclass_id] = config_read(location, 0x0A).to_be_bytes();
     let [_, header_type] = config_read(location, 0x0E).to_be_bytes();
 
-    let mut bar: [u32; 6] = [0; 6];
+    let mut bar: [usize; 6] = [0; 6];
     if header_type == 0x00 {
         for i in 0..6 {
-            bar[i] = config_read32(location, 0x10 + (i as u8) * 4);
+            bar[i] = config_read32(location, 0x10 + (i as u8) * 4) as usize; // TODO: this works in 32bit...will it work in 64?
         }
     }
 
