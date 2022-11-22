@@ -1,26 +1,26 @@
-
 use bootloader::{
     bootinfo::{MemoryMap, MemoryRegionType},
     BootInfo,
 };
 use x86_64::{
     registers::control::Cr3,
-    structures::paging::{FrameAllocator, OffsetPageTable, PageTable, PhysFrame, Size4KiB, Mapper, Page, PageTableFlags},
+    structures::paging::{
+        FrameAllocator, Mapper, OffsetPageTable, Page, PageTable, PageTableFlags, PhysFrame,
+        Size4KiB,
+    },
     PhysAddr, VirtAddr,
 };
 
 use crate::heap;
 
 pub fn init(boot_info: &'static BootInfo) -> Result<(), MemoryError> {
-    unsafe {
-        unsafe_init(boot_info)
-    }
+    unsafe { unsafe_init(boot_info) }
 }
 
 #[derive(Debug, Clone, Copy)]
 pub enum MemoryError {
     PageMappingError,
-    FrameAllocationError
+    FrameAllocationError,
 }
 
 unsafe fn unsafe_init(boot_info: &'static BootInfo) -> Result<(), MemoryError> {
@@ -36,11 +36,18 @@ unsafe fn unsafe_init(boot_info: &'static BootInfo) -> Result<(), MemoryError> {
     let mut frame_allocator = DefaultFrameAllocator::new(&boot_info.memory_map);
 
     // TODO: hack for e1000 driver
-    // The memory manager module should be decoupled from the mapper/frame allocation. 
+    // The memory manager module should be decoupled from the mapper/frame allocation.
     // The interface should simply have an init and a map/map_to method.
     let page = Page::containing_address(VirtAddr::new(0xfebc0000));
     let frame = PhysFrame::containing_address(PhysAddr::new(0xfebc0000));
-    mapper.map_to(page, frame, PageTableFlags::PRESENT | PageTableFlags::WRITABLE, &mut frame_allocator)?.flush();
+    mapper
+        .map_to(
+            page,
+            frame,
+            PageTableFlags::PRESENT | PageTableFlags::WRITABLE,
+            &mut frame_allocator,
+        )?
+        .flush();
 
     heap::init(&mut mapper, &mut frame_allocator)?;
 

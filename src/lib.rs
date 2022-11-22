@@ -10,6 +10,7 @@ pub mod gdt;
 pub mod heap;
 pub mod interrupts;
 pub mod memory;
+pub mod net;
 pub mod pci;
 pub mod print;
 pub mod serial;
@@ -20,9 +21,7 @@ extern crate alloc;
 
 #[derive(Debug, Clone, Copy)]
 pub enum OsError {
-    MemoryError {
-        err: MemoryError
-    }
+    MemoryError { err: MemoryError },
 }
 
 impl From<MemoryError> for OsError {

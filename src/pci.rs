@@ -1,7 +1,10 @@
-use core::fmt::Display;
 use alloc::vec::Vec;
-use voladdress::{VolAddress, Unsafe};
-use x86_64::{instructions::port::{PortWriteOnly, PortReadOnly}, structures::port::{PortWrite, PortRead}};
+use core::fmt::Display;
+use voladdress::{Unsafe, VolAddress};
+use x86_64::{
+    instructions::port::{PortReadOnly, PortWriteOnly},
+    structures::port::{PortRead, PortWrite},
+};
 
 const CONFIG_ADDRESS: u16 = 0xCF8;
 const CONFIG_DATA: u16 = 0xCFC;
@@ -30,6 +33,7 @@ pub struct Device {
     pub class_id: u8,
     pub header_type: u8,
     pub bar: [usize; 6],
+    pub irq: u8,
 }
 
 impl Display for Device {
@@ -46,7 +50,7 @@ impl Display for Device {
 
 impl Device {
     // TODO: I feel these should be per BAR and not at the device level
-    // So the API should be something like pci.bar[0].read()...however, 
+    // So the API should be something like pci.bar[0].read()...however,
     // pci.read may still default to bar[0]
     pub fn write<T: Copy + PortWrite>(&self, offset: usize, value: T) {
         if self.bar[0] & 1 == 0 {
@@ -69,16 +73,18 @@ impl Device {
             let io_base = self.bar[0] & !0x3;
             let addr = io_base + offset;
             let mut port = PortWriteOnly::new(addr as u16);
-            unsafe { port.write(value); }
+            unsafe {
+                port.write(value);
+            }
         }
     }
-    
+
     pub fn read<T: Copy + PortRead>(&self, offset: usize) -> T {
         if self.bar[0] & 1 == 0 {
             // Memory Mapped I/O
             if (self.bar[0] >> 1) & 3 == 0 {
                 let mem_base: usize = self.bar[0] & 0xFFFFFFF0 as usize;
-                let addr = mem_base + offset; 
+                let addr = mem_base + offset;
                 unsafe {
                     let ptr: VolAddress<T, Unsafe, ()> = VolAddress::new(addr);
                     return ptr.read();
@@ -93,10 +99,11 @@ impl Device {
             let io_base = self.bar[0] & !0x3;
             let addr = io_base + offset;
             let mut port = PortReadOnly::new(addr as u16);
-            unsafe { return port.read(); } 
+            unsafe {
+                return port.read();
+            }
         }
     }
-    
 }
 
 fn config_read(location: Location, offset: u8) -> u16 {
@@ -159,6 +166,7 @@ pub fn probe(location: Location) -> Option<Device> {
         }
     }
 
+    let [_, irq] = config_read(location, 0x3C).to_be_bytes();
     Some(Device {
         location,
         vendor_id,
@@ -169,5 +177,6 @@ pub fn probe(location: Location) -> Option<Device> {
         class_id,
         header_type,
         bar,
+        irq,
     })
 }
