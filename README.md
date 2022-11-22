@@ -14,6 +14,7 @@ You might need to install certain components.
 # Needed by bootloader crate
 rustup component add llvm-tools-preview
 
+cargo install bootimage
 brew install qemu
 
 cargo run
